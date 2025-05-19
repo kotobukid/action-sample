@@ -60,31 +60,21 @@ jobs:
           ls -la
           echo "Checking .output directory:"
           ls -la .output || echo ".output directory not found"
-
       - name: Deploy to GitHub Pages branch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Starting deploy process..."
-          echo "Current directory: $(pwd)"
-          
-          # 出力ディレクトリの確認
-          if [ -d ".output/public" ]; then
-            BUILD_DIR="$(pwd)/.output/public"
-          elif [ -d "dist" ]; then
-            BUILD_DIR="$(pwd)/dist"
-          else
-            echo "Error: Could not find build output directory"
-            echo "Directory contents:"
-            ls -la
-            exit 1
-          fi
-          
-          echo "Using build directory: $BUILD_DIR"
-          echo "Build directory contents:"
-          ls -la "$BUILD_DIR" || echo "Failed to list build directory contents"
-          
+          BUILD_DIR="$(pwd)/.output/public"
           DEPLOY_BRANCH="builds/${{ steps.branch.outputs.branch }}-${{ steps.date.outputs.date }}"
+          
+          echo "Build directory contents:"
+          ls -la "$BUILD_DIR"
+          
+          # 一時ディレクトリを作成
+          TEMP_DIR=$(mktemp -d)
+          echo "Copying build files to temp directory: $TEMP_DIR"
+          cp -r "$BUILD_DIR"/* "$TEMP_DIR/"
           
           # プロジェクトのルートディレクトリに移動
           cd ..
@@ -99,13 +89,10 @@ jobs:
           # 全てのファイルを削除（.gitは残す）
           find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
           
-          # ビルド成果物をコピー
-          if [ -d "$BUILD_DIR" ]; then
-            cp -r "$BUILD_DIR"/* .
-          else
-            echo "Error: Build directory not found"
-            exit 1
-          fi
+          # 一時ディレクトリから成果物をコピー
+          echo "Copying from temp directory to root"
+          cp -r "$TEMP_DIR"/* .
+          rm -rf "$TEMP_DIR"
           
           git add .
           git commit -m "Build from ${{ steps.branch.outputs.branch }} at ${{ steps.date.outputs.date }}"
