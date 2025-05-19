@@ -40,6 +40,8 @@ jobs:
         run: echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
 
       - name: Deploy to GitHub Pages branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BUILD_DIR=.output/public
           DEPLOY_BRANCH="builds/${{ steps.branch.outputs.branch }}-${{ steps.date.outputs.date }}"
