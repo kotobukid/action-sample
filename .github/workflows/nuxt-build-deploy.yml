@@ -43,33 +43,31 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # ビルド成果物のディレクトリ
           BUILD_DIR=.output/public
           DEPLOY_BRANCH="builds/${{ steps.branch.outputs.branch }}-${{ steps.date.outputs.date }}"
           
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # 一時ディレクトリを作成してビルド成果物をコピー
-          TEMP_DIR=$(mktemp -d)
-          cp -r $BUILD_DIR/* $TEMP_DIR/
-          
           # 新しいブランチを作成
           git checkout --orphan $DEPLOY_BRANCH
           git reset --hard
           
-          # 一時ディレクトリから必要なファイルのみをコピー
-          rm -rf *  # 現在のディレクトリをクリーン
-          cp -r $TEMP_DIR/* .
-          rm -rf $TEMP_DIR
+          # 全てのファイルを削除（.gitは残す）
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          
+          # ビルド成果物を直接ルートディレクトリにコピー
+          cp -r $BUILD_DIR/* .
           
           git add .
           git commit -m "Build from ${{ steps.branch.outputs.branch }} at ${{ steps.date.outputs.date }}"
           
-          # タグを作成
           TAG_NAME="build-${{ steps.branch.outputs.branch }}-${{ steps.date.outputs.date }}"
           git tag $TAG_NAME
           
-          # GitHubにプッシュ
+          # GitHubにプッシュ（認証付き）
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
           git push origin $DEPLOY_BRANCH
           git push origin $TAG_NAME
 
