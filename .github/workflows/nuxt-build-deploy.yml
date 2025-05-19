@@ -41,20 +41,25 @@ jobs:
 
       - name: Deploy to GitHub Pages branch
         run: |
-          # ビルド成果物のディレクトリ（vite.config.ts内のoutDirに合わせて変更）
           BUILD_DIR=.output/public
-          
-          # 新しいブランチ名の作成（例：builds/main-20240520-123456）
           DEPLOY_BRANCH="builds/${{ steps.branch.outputs.branch }}-${{ steps.date.outputs.date }}"
           
-          # デプロイ用のGit設定
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # ビルド成果物を新しいブランチにコミット
+          # 一時ディレクトリを作成してビルド成果物をコピー
+          TEMP_DIR=$(mktemp -d)
+          cp -r $BUILD_DIR/* $TEMP_DIR/
+          
+          # 新しいブランチを作成
           git checkout --orphan $DEPLOY_BRANCH
           git reset --hard
-          cp -r $BUILD_DIR/* .
+          
+          # 一時ディレクトリから必要なファイルのみをコピー
+          rm -rf *  # 現在のディレクトリをクリーン
+          cp -r $TEMP_DIR/* .
+          rm -rf $TEMP_DIR
+          
           git add .
           git commit -m "Build from ${{ steps.branch.outputs.branch }} at ${{ steps.date.outputs.date }}"
           
