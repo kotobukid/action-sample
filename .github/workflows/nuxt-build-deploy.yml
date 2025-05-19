@@ -43,9 +43,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # ビルド成果物のディレクトリ
-          BUILD_DIR=.output/public
+          # ビルド成果物のディレクトリ（フルパスで指定）
+          BUILD_DIR="$(pwd)/.output/public"
           DEPLOY_BRANCH="builds/${{ steps.branch.outputs.branch }}-${{ steps.date.outputs.date }}"
+          
+          # プロジェクトのルートディレクトリに移動
+          cd ..
           
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -58,7 +61,7 @@ jobs:
           find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
           
           # ビルド成果物を直接ルートディレクトリにコピー
-          cp -r $BUILD_DIR/* .
+          cp -r "$BUILD_DIR"/* .
           
           git add .
           git commit -m "Build from ${{ steps.branch.outputs.branch }} at ${{ steps.date.outputs.date }}"
