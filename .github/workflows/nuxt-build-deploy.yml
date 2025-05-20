@@ -43,23 +43,6 @@ jobs:
         run: |
           echo "Current directory: $(pwd)"
           echo "Directory listing of current directory:"
-          ls -la
-          echo "Content of .output directory (if exists):"
-          ls -la .output || echo ".output directory not found"
-          echo "Content of dist directory (if exists):"
-          ls -la dist || echo "dist directory not found"
-          echo "Full directory tree:"
-          tree -a || find . -type d
-
-      - name: Generate static files
-        run: |
-          echo "Starting static file generation..."
-          bun run generate
-          echo "Generation completed. Checking output directories:"
-          pwd
-          ls -la
-          echo "Checking .output directory:"
-          ls -la .output || echo ".output directory not found"
 
       - name: Deploy to GitHub Pages branch
         env:
